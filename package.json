@@ -1,0 +1,26 @@
+{
+  "name": "astra-ai",
+  "version": "1.0.0",
+  "description": "Production-ready desktop AI assistant built on a modular architecture",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "compile": "tsc --noEmit",
+    "electron:start": "electron ."
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "desktop",
+    "electron",
+    "typescript"
+  ],
+  "author": "Astra AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}
