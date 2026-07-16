@@ -10,6 +10,7 @@ import { MemoryService } from '../services/MemoryService.js';
 import { ToolManager } from '../services/ToolManager.js';
 import type { ToolRequest } from '../toolmanager/domain/ToolRequest.js';
 import { FileManager } from '../services/FileManager.js';
+import type { FileOperationRequest } from '../filemanager/domain/FileEntry.js';
 import { VisionService } from '../services/VisionService.js';
 import { VoiceService } from '../services/VoiceService.js';
 import { BrowserController } from '../controllers/BrowserController.js';
@@ -71,9 +72,22 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('tools:can-handle',    (_, stepType: string)                         => tools.canHandle(stepType));
 
   // Files
-  ipcMain.handle('file:list', (_, dirPath) => files.listFiles(dirPath));
-  ipcMain.handle('file:read', (_, filePath) => files.readSecure(filePath));
-  ipcMain.handle('file:write', (_, filePath, content) => files.writeSecure(filePath, content));
+  // Legacy channels (backward compat)
+  ipcMain.handle('file:list',  (_, dirPath)            => files.listFiles(dirPath));
+  ipcMain.handle('file:read',  (_, filePath)           => files.readSecure(filePath));
+  ipcMain.handle('file:write', (_, filePath, content)  => files.writeSecure(filePath, content));
+  // New full File Manager API
+  ipcMain.handle('file:list-full',     (_, dirPath, recursive?)          => files.list(dirPath, recursive));
+  ipcMain.handle('file:read-full',     (_, filePath)                     => files.read(filePath));
+  ipcMain.handle('file:write-full',    (_, filePath, content, overwrite?)=> files.write(filePath, content, overwrite));
+  ipcMain.handle('file:stat',          (_, targetPath)                   => files.stat(targetPath));
+  ipcMain.handle('file:search',        (_, root, query, inContent?, ext?, recursive?, max?) =>
+    files.search(root, query, inContent, ext, recursive, max));
+  ipcMain.handle('file:create-folder', (_, dirPath)                      => files.createFolder(dirPath));
+  ipcMain.handle('file:rename',        (_, path, newName)                => files.rename(path, newName));
+  ipcMain.handle('file:delete',        (_, targetPath)                   => files.delete(targetPath));
+  ipcMain.handle('file:copy',          (_, src, dest, overwrite?)        => files.copy(src, dest, overwrite));
+  ipcMain.handle('file:move',          (_, src, dest, overwrite?)        => files.move(src, dest, overwrite));
 
   // Vision
   ipcMain.handle('vision:analyze', (_, imagePath) => vision.analyzeImage(imagePath));

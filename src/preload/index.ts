@@ -45,10 +45,35 @@ contextBridge.exposeInMainWorld('astraAPI', {
   canHandleStepType: (stepType: string) => ipcRenderer.invoke('tools:can-handle', stepType),
 
 
-  // Files
+  // Files — Legacy (backward compat)
   listFiles: (dirPath: string) => ipcRenderer.invoke('file:list', dirPath),
-  readFile: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
+  readFile:  (filePath: string) => ipcRenderer.invoke('file:read', filePath),
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('file:write', filePath, content),
+  // Files — Full File Manager API
+  /** Read a file and get full metadata + content */
+  readFileFull:  (filePath: string) => ipcRenderer.invoke('file:read-full', filePath),
+  /** List directory entries with full metadata */
+  listFilesFull: (dirPath: string, recursive?: boolean) => ipcRenderer.invoke('file:list-full', dirPath, recursive),
+  /** Write text to a file (creates parent dirs automatically) */
+  writeFileFull: (filePath: string, content: string, overwrite?: boolean) => ipcRenderer.invoke('file:write-full', filePath, content, overwrite),
+  /** Get metadata for a single path */
+  statFile: (targetPath: string) => ipcRenderer.invoke('file:stat', targetPath),
+  /** Search for files by name or content */
+  searchFiles: (rootPath: string, query: string, inContent?: boolean, ext?: string, recursive?: boolean, max?: number) =>
+    ipcRenderer.invoke('file:search', rootPath, query, inContent, ext, recursive, max),
+  /** Create a directory (and all parent dirs) */
+  createFolder: (dirPath: string) => ipcRenderer.invoke('file:create-folder', dirPath),
+  /** Rename a file or directory */
+  renameFile: (filePath: string, newName: string) => ipcRenderer.invoke('file:rename', filePath, newName),
+  /** Delete a file or directory */
+  deleteFile: (targetPath: string) => ipcRenderer.invoke('file:delete', targetPath),
+  /** Copy a file or directory */
+  copyFile: (sourcePath: string, destinationPath: string, overwrite?: boolean) =>
+    ipcRenderer.invoke('file:copy', sourcePath, destinationPath, overwrite),
+  /** Move a file or directory */
+  moveFile: (sourcePath: string, destinationPath: string, overwrite?: boolean) =>
+    ipcRenderer.invoke('file:move', sourcePath, destinationPath, overwrite),
+
 
   // Vision
   analyzeImage: (imagePath: string) => ipcRenderer.invoke('vision:analyze', imagePath),
