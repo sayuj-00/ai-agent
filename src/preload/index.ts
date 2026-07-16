@@ -31,9 +31,19 @@ contextBridge.exposeInMainWorld('astraAPI', {
   recallMemory: (query: string) => ipcRenderer.invoke('memory:recall', query),
   clearMemory: () => ipcRenderer.invoke('memory:clear'),
 
-  // Tools
+  // Tools — Legacy (backward compat)
   listTools: () => ipcRenderer.invoke('tools:list'),
   executeTool: (name: string, args: any) => ipcRenderer.invoke('tools:execute', name, args),
+  // Tools — New dispatch API (Tool Manager clean architecture)
+  /** Dispatch a ToolRequest to the correct handler via the Tool Manager */
+  dispatchTool: (request: any) => ipcRenderer.invoke('tools:dispatch', request),
+  /** Dispatch a PlanStep directly — no need to construct a ToolRequest manually */
+  dispatchPlanStep: (planId: string, step: any, params?: any) => ipcRenderer.invoke('tools:dispatch-step', planId, step, params),
+  /** List all registered StepType → Handler routing rules */
+  listToolRoutes: () => ipcRenderer.invoke('tools:list-routes'),
+  /** Check if a StepType has a registered handler */
+  canHandleStepType: (stepType: string) => ipcRenderer.invoke('tools:can-handle', stepType),
+
 
   // Files
   listFiles: (dirPath: string) => ipcRenderer.invoke('file:list', dirPath),

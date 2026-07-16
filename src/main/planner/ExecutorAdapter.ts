@@ -1,25 +1,25 @@
 /**
- * Planner Infrastructure — ExecutorAdapter (IPlannerPort stub)
+ * Planner Infrastructure — ExecutorAdapter (IPlannerPort implementation)
  *
- * Implements IPlannerPort as a no-op logging adapter.
+ * Implements IPlannerPort — the Planner's output port.
+ * When PlannerUseCase calls onPlanReady(plan), this adapter:
  *
- * Since the Executor module is not yet built, this adapter:
- *  1. Logs the incoming Plan with full step details.
- *  2. Marks the plan as 'ready' (waiting for Executor).
- *  3. Logs each step so the Logs panel shows the full decomposition.
+ *  1. Logs the full plan decomposition (step types, labels, estimates).
+ *  2. Dispatches each step to the Tool Manager via ToolManagerService.dispatchStep().
+ *  3. Steps execute sequentially in dependency order.
+ *  4. Results are logged for full observability in the Logs panel.
  *
- * When the Executor is built, it will implement IPlannerPort for real.
- * This file will be replaced. The Planner module and PlannerUseCase
- * will not require any changes.
- *
- * Architecture note:
- *  This adapter lives in the Planner module — NOT in services/ —
- *  because it is part of the Planner's outbound wiring.
+ * Architecture:
+ *  - Lives in the Planner module (Planner's outbound wiring).
+ *  - Is the ONLY place Planner + Tool Manager touch.
+ *  - Planner domain/application layers have ZERO knowledge of ToolManagerService.
+ *  - When a proper Executor module is built, replace this file — nothing else changes.
  */
 
 import type { IPlannerPort } from './domain/IPlannerPort.js';
-import type { Plan } from './domain/Plan.js';
+import type { Plan, PlanStep } from './domain/Plan.js';
 import { LogService } from '../services/LogService.js';
+import { ToolManagerService } from '../toolmanager/ToolManagerService.js';
 
 /** Step-type icons for readable log output */
 const STEP_ICONS: Record<string, string> = {
@@ -36,39 +36,81 @@ const STEP_ICONS: Record<string, string> = {
 };
 
 export class ExecutorAdapter implements IPlannerPort {
-  private readonly logger = LogService.getInstance();
+  private readonly logger      = LogService.getInstance();
+  private readonly toolManager = ToolManagerService.getInstance();
 
   public async onPlanReady(plan: Plan): Promise<void> {
-    // Log plan summary
+    // ── 1. Log plan summary ──────────────────────────────────────────────────
     this.logger.info(
       'ExecutorAdapter',
-      `📋 Plan [${plan.id}] assembled — ` +
+      `📋 Plan [${plan.id}] received — ` +
       `"${plan.goal.substring(0, 60)}${plan.goal.length > 60 ? '…' : ''}" | ` +
-      `${plan.steps.length} steps | complexity=${plan.complexity} | ~${plan.estimatedSeconds}s estimated`
+      `${plan.steps.length} steps | complexity=${plan.complexity} | ~${plan.estimatedSeconds}s`
     );
 
-    // Log tags if any
     if (plan.tags.length > 0) {
       this.logger.info('ExecutorAdapter', `🏷️  Tags: ${plan.tags.map(t => `[${t}]`).join(' ')}`);
     }
 
-    // Log each step for full observability in the Logs panel
+    // ── 2. Log step manifest ─────────────────────────────────────────────────
     for (const step of plan.steps) {
       const icon = STEP_ICONS[step.type] ?? '▸';
       const deps = step.dependencies.length > 0
-        ? ` (after step${step.dependencies.length > 1 ? 's' : ''} ${step.dependencies.join(', ')})`
+        ? ` → after [${step.dependencies.join(', ')}]`
         : '';
       this.logger.info(
         'ExecutorAdapter',
-        `  ${icon} Step ${step.id}: [${step.type}] ${step.label}${deps} — ~${step.estimatedSeconds}s`
+        `  ${icon} Step ${step.id}: [${step.type}] ${step.label}${deps} ~${step.estimatedSeconds}s`
       );
     }
 
-    // Log queued status (Executor not built yet)
+    // ── 3. Dispatch each step sequentially through the Tool Manager ──────────
+    this.logger.info('ExecutorAdapter', `▶ Dispatching ${plan.steps.length} steps to Tool Manager…`);
+
+    for (const step of plan.steps) {
+      await this.dispatchStep(plan, step);
+    }
+
+    // ── 4. Plan complete ─────────────────────────────────────────────────────
     this.logger.info(
       'ExecutorAdapter',
-      `⏸  Plan [${plan.id}] queued — ` +
-      `Executor module not yet implemented. Ready for execution when built.`
+      `✔ Plan [${plan.id}] dispatched — all steps sent to Tool Manager.`
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  private async dispatchStep(plan: Plan, step: PlanStep): Promise<void> {
+    const icon = STEP_ICONS[step.type] ?? '▸';
+
+    try {
+      const result = await this.toolManager.dispatchStep(plan.id, step);
+
+      if (result.status === 'success') {
+        this.logger.info(
+          'ExecutorAdapter',
+          `  ${icon} Step ${step.id} ✔ [${result.handlerName}] ${result.durationMs}ms` +
+          (result.output ? ` — ${result.output.substring(0, 80)}${result.output.length > 80 ? '…' : ''}` : '')
+        );
+      } else if (result.status === 'not_implemented') {
+        this.logger.warn(
+          'ExecutorAdapter',
+          `  ${icon} Step ${step.id} ⚠ [${step.type}] No handler registered — skipping.`
+        );
+      } else {
+        this.logger.error(
+          'ExecutorAdapter',
+          `  ${icon} Step ${step.id} ✖ [${result.handlerName}] Failed: ${result.error}`
+        );
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        'ExecutorAdapter',
+        `  ${icon} Step ${step.id} ✖ Unexpected error: ${msg}`
+      );
+    }
   }
 }

@@ -8,6 +8,7 @@ import type { Plan } from '../planner/domain/Plan.js';
 import { PlannerService } from '../services/PlannerService.js';
 import { MemoryService } from '../services/MemoryService.js';
 import { ToolManager } from '../services/ToolManager.js';
+import type { ToolRequest } from '../toolmanager/domain/ToolRequest.js';
 import { FileManager } from '../services/FileManager.js';
 import { VisionService } from '../services/VisionService.js';
 import { VoiceService } from '../services/VoiceService.js';
@@ -60,8 +61,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('memory:clear', () => memory.clearMemory());
 
   // Tools
-  ipcMain.handle('tools:list', () => tools.listTools());
+  // Legacy channels (backward compat)
+  ipcMain.handle('tools:list',    ()             => tools.listTools());
   ipcMain.handle('tools:execute', (_, name, args) => tools.executeTool(name, args));
+  // New dispatch channels (Tool Manager clean architecture)
+  ipcMain.handle('tools:dispatch',      (_, request: ToolRequest)                     => tools.dispatch(request));
+  ipcMain.handle('tools:dispatch-step', (_, planId: string, step: any, params?: any) => tools.dispatchStep(planId, step, params));
+  ipcMain.handle('tools:list-routes',   ()                                            => tools.listRoutes());
+  ipcMain.handle('tools:can-handle',    (_, stepType: string)                         => tools.canHandle(stepType));
 
   // Files
   ipcMain.handle('file:list', (_, dirPath) => files.listFiles(dirPath));
