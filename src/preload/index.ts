@@ -93,6 +93,13 @@ contextBridge.exposeInMainWorld('astraAPI', {
   // Terminal
   executeCommand: (command: string) => ipcRenderer.invoke('terminal:execute', command),
 
+  // Application Control
+  launchApp: (appNameOrPath: string, args?: string[]) => ipcRenderer.invoke('app:launch', appNameOrPath, args),
+  closeApp: (identifier: number | string) => ipcRenderer.invoke('app:close', identifier),
+  switchAppWindow: (identifier: number | string) => ipcRenderer.invoke('app:switch-window', identifier),
+  detectRunningApps: () => ipcRenderer.invoke('app:detect'),
+
+
   // Logs
   getLogs: () => ipcRenderer.invoke('logs:get'),
   onLogEvent: (callback: (log: any) => void) => {

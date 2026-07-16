@@ -15,6 +15,7 @@ import { VisionService } from '../services/VisionService.js';
 import { VoiceService } from '../services/VoiceService.js';
 import { BrowserController } from '../controllers/BrowserController.js';
 import { TerminalController } from '../controllers/TerminalController.js';
+import { ApplicationController } from '../controllers/ApplicationController.js';
 
 export function registerIpcHandlers(): void {
   const settings = SettingsService.getInstance();
@@ -28,6 +29,7 @@ export function registerIpcHandlers(): void {
   const voice = VoiceService.getInstance();
   const browser = BrowserController.getInstance();
   const terminal = TerminalController.getInstance();
+  const appController = ApplicationController.getInstance();
 
   // Settings
   ipcMain.handle('settings:get-all', () => settings.getAll());
@@ -106,6 +108,12 @@ export function registerIpcHandlers(): void {
 
   // Terminal
   ipcMain.handle('terminal:execute', (_, command) => terminal.executeCommand(command));
+
+  // Application Control
+  ipcMain.handle('app:launch', (_, appNameOrPath, args) => appController.launch(appNameOrPath, args));
+  ipcMain.handle('app:close', (_, identifier) => appController.close(identifier));
+  ipcMain.handle('app:switch-window', (_, identifier) => appController.switchWindow(identifier));
+  ipcMain.handle('app:detect', () => appController.detectRunningApps());
 
   // Logs Retrieval
   ipcMain.handle('logs:get', () => logger.getLogs());

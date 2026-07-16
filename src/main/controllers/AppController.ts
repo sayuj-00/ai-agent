@@ -11,6 +11,7 @@ import { VisionService } from '../services/VisionService.js';
 import { VoiceService } from '../services/VoiceService.js';
 import { BrowserController } from './BrowserController.js';
 import { TerminalController } from './TerminalController.js';
+import { ApplicationController } from './ApplicationController.js';
 import { registerIpcHandlers } from '../ipc/ipcHandlers.js';
 
 export class AppController {
@@ -45,6 +46,7 @@ export class AppController {
       VoiceService.getInstance();
       BrowserController.getInstance();
       TerminalController.getInstance();
+      ApplicationController.getInstance();
       this.logger.info('AppController', 'All system modules loaded successfully.');
 
       // Setup IPC bindings
