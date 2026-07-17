@@ -90,8 +90,27 @@ contextBridge.exposeInMainWorld('astraAPI', {
   closeBrowser: () => ipcRenderer.invoke('browser:close'),
   getBrowserStatus: () => ipcRenderer.invoke('browser:status'),
 
-  // Terminal
+  // Terminal — Legacy (backward compat)
   executeCommand: (command: string) => ipcRenderer.invoke('terminal:execute', command),
+  // Terminal — Full structured API
+  /** Execute a command and get a full structured CommandResult */
+  runCommand: (command: string, options?: any) => ipcRenderer.invoke('terminal:run', command, options),
+  /** List all terminal sessions */
+  getTerminalSessions: () => ipcRenderer.invoke('terminal:sessions'),
+  /** Get a specific session by ID */
+  getTerminalSession: (sessionId: string) => ipcRenderer.invoke('terminal:session', sessionId),
+  /** Cancel a running command by session ID */
+  cancelCommand: (sessionId: string) => ipcRenderer.invoke('terminal:cancel', sessionId),
+  /** Cancel all running commands */
+  cancelAllCommands: () => ipcRenderer.invoke('terminal:cancel-all'),
+  /** Clear completed session history */
+  clearTerminalHistory: () => ipcRenderer.invoke('terminal:clear'),
+  /** Get execution stats (success rate, totals) */
+  getTerminalStats: () => ipcRenderer.invoke('terminal:stats'),
+  /** Get the shell name being used (e.g. "PowerShell") */
+  getShellName: () => ipcRenderer.invoke('terminal:shell'),
+
+
 
   // Application Control
   launchApp: (appNameOrPath: string, args?: string[]) => ipcRenderer.invoke('app:launch', appNameOrPath, args),

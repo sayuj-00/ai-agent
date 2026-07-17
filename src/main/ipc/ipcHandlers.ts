@@ -106,8 +106,18 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('browser:close', () => browser.close());
   ipcMain.handle('browser:status', () => browser.getSessionStatus());
 
-  // Terminal
+  // Terminal — Legacy (backward compat)
   ipcMain.handle('terminal:execute', (_, command) => terminal.executeCommand(command));
+  // Terminal — Full API
+  ipcMain.handle('terminal:run',         (_, command, options?) => terminal.execute(command, options));
+  ipcMain.handle('terminal:sessions',    ()                     => terminal.getSessions());
+  ipcMain.handle('terminal:session',     (_, sessionId)         => terminal.getSession(sessionId));
+  ipcMain.handle('terminal:cancel',      (_, sessionId)         => terminal.cancel(sessionId));
+  ipcMain.handle('terminal:cancel-all',  ()                     => terminal.cancelAll());
+  ipcMain.handle('terminal:clear',       ()                     => terminal.clearHistory());
+  ipcMain.handle('terminal:stats',       ()                     => terminal.getStats());
+  ipcMain.handle('terminal:shell',       ()                     => terminal.shellName);
+
 
   // Application Control
   ipcMain.handle('app:launch', (_, appNameOrPath, args) => appController.launch(appNameOrPath, args));
