@@ -57,11 +57,37 @@ export function registerIpcHandlers(): void {
   // UI step simulation (kept for PlannerPanel)
   ipcMain.handle('planner:run-step', (_, planId, stepId) => planner.runStep(planId, stepId));
 
-  // Memory
+  // Memory — Legacy (backward compat)
   ipcMain.handle('memory:get-all', () => memory.getAllMemories());
-  ipcMain.handle('memory:store', (_, content, category, tags) => memory.store(content, category, tags));
-  ipcMain.handle('memory:recall', (_, query) => memory.recall(query));
-  ipcMain.handle('memory:clear', () => memory.clearMemory());
+  ipcMain.handle('memory:store',   (_, content, category, tags) => memory.store(content, category, tags));
+  ipcMain.handle('memory:recall',  (_, query) => memory.recallMemory(query));
+  ipcMain.handle('memory:clear',   () => memory.clearMemory());
+  // Memory — Full API
+  ipcMain.handle('memory:store-conversation', (_, content, role, tags)      => memory.storeConversationTurn(content, role, tags));
+  ipcMain.handle('memory:store-long-term',    (_, content, tags, importance) => memory.storeLongTerm(content, tags, importance));
+  ipcMain.handle('memory:recall-full',        (_, query, options)            => memory.recall(query, options));
+  ipcMain.handle('memory:get-by-category',    (_, category)                  => memory.getByCategory(category));
+  ipcMain.handle('memory:delete-node',        (_, id)                        => memory.deleteNode(id));
+  ipcMain.handle('memory:clear-category',     (_, category)                  => memory.clearCategory(category));
+  ipcMain.handle('memory:stats',              ()                              => memory.getStats());
+  ipcMain.handle('memory:evict-expired',      ()                              => memory.evictExpired());
+  // Preferences
+  ipcMain.handle('memory:set-preference',     (_, key, value)                => memory.setPreference(key, value));
+  ipcMain.handle('memory:get-preference',     (_, key)                       => memory.getPreference(key));
+  ipcMain.handle('memory:get-all-preferences',()                             => memory.getAllPreferences());
+  // Folders
+  ipcMain.handle('memory:track-folder',       (_, path, label?)              => memory.trackFolder(path, label));
+  ipcMain.handle('memory:get-folders',        (_, limit?)                    => memory.getFrequentFolders(limit));
+  // Apps
+  ipcMain.handle('memory:track-app',          (_, name, path?)               => memory.trackApp(name, path));
+  ipcMain.handle('memory:get-apps',           (_, limit?)                    => memory.getFrequentApps(limit));
+  // Websites
+  ipcMain.handle('memory:track-website',      (_, url, title?)               => memory.trackWebsite(url, title));
+  ipcMain.handle('memory:get-websites',       (_, limit?)                    => memory.getFavoriteWebsites(limit));
+  // Tasks
+  ipcMain.handle('memory:record-task',        (_, desc, action, ok, steps, ms?) => memory.recordTask(desc, action, ok, steps, ms));
+  ipcMain.handle('memory:get-tasks',          (_, limit?)                    => memory.getRecentTasks(limit));
+
 
   // Tools
   // Legacy channels (backward compat)
