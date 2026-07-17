@@ -117,8 +117,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('file:copy',          (_, src, dest, overwrite?)        => files.copy(src, dest, overwrite));
   ipcMain.handle('file:move',          (_, src, dest, overwrite?)        => files.move(src, dest, overwrite));
 
-  // Vision
+  // Vision — Legacy (backward compat)
   ipcMain.handle('vision:analyze', (_, imagePath) => vision.analyzeImage(imagePath));
+  // Vision — Full API
+  ipcMain.handle('vision:capture',         ()               => vision.captureScreen());
+  ipcMain.handle('vision:analyze-current', ()               => vision.analyzeCurrentScreen());
+  ipcMain.handle('vision:ocr',             (_, imagePath)   => vision.ocr(imagePath));
+
 
   // Voice
   ipcMain.handle('voice:speak', (_, text) => voice.speak(text));

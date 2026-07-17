@@ -75,8 +75,16 @@ contextBridge.exposeInMainWorld('astraAPI', {
     ipcRenderer.invoke('file:move', sourcePath, destinationPath, overwrite),
 
 
-  // Vision
+  // Vision — Legacy (backward compat)
   analyzeImage: (imagePath: string) => ipcRenderer.invoke('vision:analyze', imagePath),
+  // Vision — Full structured API
+  /** Take a real screenshot of the primary display */
+  captureScreen: () => ipcRenderer.invoke('vision:capture'),
+  /** Capture screen and return layout analysis + OCR text in one step */
+  analyzeCurrentScreen: () => ipcRenderer.invoke('vision:analyze-current'),
+  /** Perform OCR on a given image file */
+  runOcr: (imagePath: string) => ipcRenderer.invoke('vision:ocr', imagePath),
+
 
   // Voice
   speak: (text: string) => ipcRenderer.invoke('voice:speak', text),
